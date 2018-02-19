@@ -31,4 +31,4 @@ weight = 5
 
 # About me
 
-I'm a graduate student in the Petroff lab at MSU and am an executive board member of  [MSU Data Science](www.msudatascience.com).  When I'm not in the lab, I enjoy cooking, photography, and reading. #rstats
+I'm a graduate student in the Petroff lab at MSU and am an executive board member of  [MSU Data Science](https://msudatascience.com).  When I'm not in the lab, I enjoy cooking, photography, and reading. #rstats
