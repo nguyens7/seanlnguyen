@@ -18,7 +18,7 @@ weight = 5
 
 # List your qualifications (such as academic degrees).
 [[education.courses]]
-  course = "PhD in Cell and Molecular Biology & Environmental Toxicology"
+  course = "PhD in Cell and Molecular Biology & Environmental Toxicology (expected)"
   institution = "Michigan State University"
   year = 2018
 
