@@ -14,6 +14,15 @@
     
     <url>
     
+      <loc>/post/mapping-starbucks-locations/</loc>
+      <lastmod>2017-01-11T00:00:00+00:00</lastmod>
+    </url>
+    
+  
+    
+    
+    <url>
+    
       <loc>/talk/example-talk/</loc>
       <lastmod>2017-01-01T00:00:00-05:00</lastmod>
     </url>
@@ -69,6 +78,16 @@
     
     <url>
     
+      <loc>/tags/leaflet/</loc>
+      <lastmod>2017-01-11T00:00:00+00:00</lastmod>
+      <priority>0</priority>
+    </url>
+    
+  
+    
+    
+    <url>
+    
       <loc>/categories/r/</loc>
       <lastmod>2018-02-18T00:00:00+00:00</lastmod>
       <priority>0</priority>
@@ -111,6 +130,16 @@
     
       <loc>/tags/spacex/</loc>
       <lastmod>2018-02-18T00:00:00+00:00</lastmod>
+      <priority>0</priority>
+    </url>
+    
+  
+    
+    
+    <url>
+    
+      <loc>/tags/starbucks/</loc>
+      <lastmod>2017-01-11T00:00:00+00:00</lastmod>
       <priority>0</priority>
     </url>
     
