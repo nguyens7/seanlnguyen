@@ -205,7 +205,7 @@ p &lt;/code&gt;&lt;/pre&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;ggsave(here(&amp;quot;static/img/headers&amp;quot;,  &amp;quot;sleep.png&amp;quot;),
        height = 4, width = 7, units = &amp;quot;in&amp;quot;, dpi = 600)&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;Notice how I use &lt;strong&gt;here&lt;/strong&gt; within the ggsave function to specify which folder within the R project directory to save the file. This makes sure that the code will work on ANYONE’S computer regardless of where they put their folder!&lt;/p&gt;
-&lt;p&gt;So I hope you were able to learn something knew from this blog post or hopefully be inspired to analyze an interesting dataset of your own. Feel free to comment or reach out if you have any questions or suggestions!&lt;/p&gt;
+&lt;p&gt;So I hope you were able to learn something new from this blog post or hopefully be inspired to analyze an interesting dataset of your own. Feel free to comment or reach out if you have any questions or suggestions!&lt;/p&gt;
 &lt;div id=&#34;and-one-more-thing&#34; class=&#34;section level2&#34;&gt;
 &lt;h2&gt;And one more thing&lt;/h2&gt;
 &lt;p&gt;&lt;strong&gt;Be sure to get enough sleep!&lt;/strong&gt; &lt;img src=&#34;https://media1.tenor.com/images/fbe770aca0cf5a81f5f34f92befc33f3/tenor.gif&#34; /&gt;&lt;/p&gt;
