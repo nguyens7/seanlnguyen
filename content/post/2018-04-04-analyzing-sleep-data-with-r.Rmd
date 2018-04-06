@@ -237,7 +237,7 @@ ggsave(here("static/img/headers",  "sleep.png"),
 
 Notice how I use **here** within the ggsave function to specify which folder within the R project directory to save the file.  This makes sure that the code will work on ANYONE'S computer regardless of where they put their folder! 
 
-So I hope you were able to learn something knew from this blog post or hopefully be inspired to analyze an interesting dataset of your own.  Feel free to comment or reach out if you have any questions or suggestions!
+So I hope you were able to learn something new from this blog post or hopefully be inspired to analyze an interesting dataset of your own.  Feel free to comment or reach out if you have any questions or suggestions!
 
 ##And one more thing
 
