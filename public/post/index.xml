@@ -13,6 +13,15 @@
     
     
     <item>
+      <title>Analyzing Sleep Data with R</title>
+      <link>/post/analyzing-sleep-data-with-r/</link>
+      <pubDate>Fri, 06 Apr 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/post/analyzing-sleep-data-with-r/</guid>
+      <description>I’ve been using the iOS Sleep Cycle app to track my sleeping since late 2014 and have accumulated quite a bit of information about my sleeping habits. I wanted to see if I could do some exploratory data analysis and try out some different packages to clean up and visualize my data. The data from the app comes in a csv file and contains information like date, sleep quality, sleep duration, and more recently it can integrate with the pedometer so you can get the number of steps in a given day.</description>
+    </item>
+    
+    <item>
       <title>The World’s Most Powerful Rocket</title>
       <link>/post/the-world-s-most-powerful-rocket/</link>
       <pubDate>Sun, 18 Feb 2018 00:00:00 +0000</pubDate>

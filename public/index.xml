@@ -11,6 +11,209 @@
     <atom:link href="/" rel="self" type="application/rss+xml" />
     
     <item>
+      <title>Analyzing Sleep Data with R</title>
+      <link>/post/analyzing-sleep-data-with-r/</link>
+      <pubDate>Fri, 06 Apr 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/post/analyzing-sleep-data-with-r/</guid>
+      <description>&lt;p&gt;I’ve been using the iOS Sleep Cycle app to track my sleeping since late 2014 and have accumulated quite a bit of information about my sleeping habits. I wanted to see if I could do some exploratory data analysis and try out some different packages to clean up and visualize my data. The data from the app comes in a csv file and contains information like date, sleep quality, sleep duration, and more recently it can integrate with the pedometer so you can get the number of steps in a given day. The tidyverse is my go to package for a ton of my data analysis, it works so well with cleaning up and exploring data.&lt;/p&gt;
+&lt;p&gt;For this analysis I wanted to utilize four packages to learn more about them and apply them to this datatset:&lt;/p&gt;
+&lt;ol style=&#34;list-style-type: decimal&#34;&gt;
+&lt;li&gt;&lt;a href=&#34;http://lubridate.tidyverse.org/&#34;&gt;&lt;strong&gt;lubridate&lt;/strong&gt;&lt;/a&gt; helps you work with dates and times&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://cran.r-project.org/web/packages/ggridges/vignettes/introduction.html&#34;&gt;&lt;strong&gt;ggridges&lt;/strong&gt;&lt;/a&gt; allows you to make ridgeplots&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://cran.r-project.org/web/packages/viridis/vignettes/intro-to-viridis.html&#34;&gt;&lt;strong&gt;viridis&lt;/strong&gt;&lt;/a&gt; for nice diverging color palettes/schemes&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://github.com/r-lib/here&#34;&gt;&lt;strong&gt;here&lt;/strong&gt;&lt;/a&gt; to reproducible refer to files for importing and saving data within an R project directory &lt;a href=&#34;https://github.com/jennybc/here_here&#34;&gt;&lt;strong&gt;link to a repo explaining this package&lt;/strong&gt;&lt;/a&gt;&lt;/li&gt;
+&lt;/ol&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;library(tidyverse)
+library(lubridate)
+library(ggridges)
+library(viridis)
+library(here)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;First I used the here package to tell R that I wanted to read in my file that was located in the ‘data’ folder. The nice thing about &lt;strong&gt;here()&lt;/strong&gt; is that is automatically defaults to the root R project folder so as long as you have the project folder it doesn’t matter where you place the folder on your computer, the file will still be accessible since &lt;strong&gt;here()&lt;/strong&gt; takes care of it for you.&lt;/p&gt;
+&lt;p&gt;The next step was reading in the file with &lt;strong&gt;read_delim()&lt;/strong&gt; with the delim = “;”. I then used rename to change column names and used &lt;strong&gt;mutate()&lt;/strong&gt; extensively to create new columns from existing data. I used a couple tricks to get the columns that I wanted like &lt;strong&gt;str_replace()&lt;/strong&gt; to remove “%” from the sleep_quality column. I also used &lt;strong&gt;ifelse()&lt;/strong&gt; and &lt;strong&gt;grepl()&lt;/strong&gt; to create a column of Weekend Weekday to tease apart differences in days of the week. After mutate I used &lt;strong&gt;select()&lt;/strong&gt; to pick the columns I wanted. &lt;strong&gt;mutate_at()&lt;/strong&gt; is one of my favorite functions to convert multiple columns to a different data type in R. After that I was able to have a clean dataset that was ready for exploratory data analysis!&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;file &amp;lt;- here(&amp;quot;data/sleepdata.csv&amp;quot;)
+
+df &amp;lt;- read_delim(file, delim = &amp;quot;;&amp;quot;) %&amp;gt;% 
+  rename(sleep_quality = `Sleep quality`,
+         time_in_bed = `Time in bed`,
+         steps = `Activity (steps)`) %&amp;gt;% 
+  mutate(sleep_quality = str_replace(sleep_quality, &amp;quot;\\%&amp;quot;, &amp;quot;&amp;quot;) %&amp;gt;% as.numeric,
+         day_of_week = as.Date(Start) %&amp;gt;% wday(label = TRUE),
+         what_day = ifelse(grepl(&amp;quot;Sat|Sun&amp;quot;, day_of_week),&amp;quot;Weekend&amp;quot;,&amp;quot;Weekday&amp;quot;) %&amp;gt;%
+                                   as.factor(),
+         sleep_hour = ymd_hms(Start) %&amp;gt;% hour(),
+         sleep_min = ymd_hms(Start) %&amp;gt;% minute()/60,
+         sleep_time = sleep_hour + sleep_min,
+         time_hr = period_to_seconds(hms(time_in_bed))/3600,
+         date = ymd_hms(Start), 
+         day = day(date), 
+         month = month(date), 
+         year = year(date)) %&amp;gt;% 
+  select(year, month, day, day_of_week,what_day,sleep_time, Start:time_in_bed, time_hr,steps) %&amp;gt;% 
+  mutate_at(vars(year:day),as.factor)
+df&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## # A tibble: 1,270 x 12
+##    year  month day   day_of_week what_day sleep_time Start              
+##    &amp;lt;fct&amp;gt; &amp;lt;fct&amp;gt; &amp;lt;fct&amp;gt; &amp;lt;ord&amp;gt;       &amp;lt;fct&amp;gt;         &amp;lt;dbl&amp;gt; &amp;lt;dttm&amp;gt;             
+##  1 2014  9     28    Sun         Weekend       3.57  2014-09-28 03:34:30
+##  2 2014  9     30    Tue         Weekday       1.00  2014-09-30 01:00:51
+##  3 2014  10    1     Wed         Weekday       2.12  2014-10-01 02:07:23
+##  4 2014  10    2     Thu         Weekday       1.40  2014-10-02 01:24:34
+##  5 2014  10    3     Fri         Weekday       0.400 2014-10-03 00:24:24
+##  6 2014  10    5     Sun         Weekend       1.65  2014-10-05 01:39:23
+##  7 2014  10    6     Mon         Weekday      23.6   2014-10-06 23:37:14
+##  8 2014  10    8     Wed         Weekday       0.700 2014-10-08 00:42:22
+##  9 2014  10    8     Wed         Weekday      23.6   2014-10-08 23:37:56
+## 10 2014  10    10    Fri         Weekday       0.433 2014-10-10 00:26:28
+## # ... with 1,260 more rows, and 5 more variables: End &amp;lt;dttm&amp;gt;,
+## #   sleep_quality &amp;lt;dbl&amp;gt;, time_in_bed &amp;lt;time&amp;gt;, time_hr &amp;lt;dbl&amp;gt;, steps &amp;lt;int&amp;gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;I plotted all the data points as a function of time to see if there was anything general trend with sleep duration and sleep quality these past couple years. Notice how I used &lt;strong&gt;scale_color_viridis()&lt;/strong&gt; to have a nice diverging color palette for geom_point(). We can see that it seems like I get around 7-7.5 hours a sleep per night on average.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;df %&amp;gt;% 
+  ggplot(aes(x = Start, y = time_hr, color = sleep_quality)) +
+  geom_point(alpha = 0.6) + 
+  geom_smooth() +
+  scale_color_viridis() +
+  labs(title = &amp;quot;Hours of Sleep&amp;quot;,
+       subtitle = &amp;quot;Source: iPhone sleep cycle data (2014-2018)&amp;quot;,
+       x = &amp;quot;Date&amp;quot;,
+       y = &amp;quot;Hours of Sleep&amp;quot;,
+       color = &amp;quot;Sleep Quality\n&amp;quot;) +
+  theme_bw()&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2018-04-04-analyzing-sleep-data-with-r_files/figure-html/unnamed-chunk-3-1.png&#34; width=&#34;672&#34; /&gt; Next I wanted to see what time I went to sleep and look at the sleep quality. We can see that the quality appears to go up as I go to bed earlier.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;df %&amp;gt;% 
+  ggplot(aes(x = Start, y = sleep_time, color = sleep_quality)) +
+  geom_point() +
+  scale_color_viridis() +
+  scale_y_continuous(expand = c(0,0),
+                     breaks = seq(0,24,4),
+                     limits = c(0,24.1),
+                    labels = c(&amp;quot;12 AM&amp;quot;,&amp;quot;4 AM&amp;quot;,&amp;quot;8 AM&amp;quot;, &amp;quot;12 PM&amp;quot;, &amp;quot;4 PM&amp;quot;,&amp;quot;8 PM&amp;quot;,&amp;quot;11:59 PM&amp;quot;)) +
+  labs(title = &amp;quot;Bedtime and Sleep Quality&amp;quot;,
+       subtitle = &amp;quot;Source: iPhone sleep cycle data (2014-2018)&amp;quot;,
+       x = &amp;quot;Date&amp;quot;,
+       y = &amp;quot;Bedtime&amp;quot;,
+       color = &amp;quot;Sleep Quality\n&amp;quot;) +
+  theme_bw()&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2018-04-04-analyzing-sleep-data-with-r_files/figure-html/unnamed-chunk-4-1.png&#34; width=&#34;672&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;Then I wondered if there might be a difference in bedtime between weekdays and weekends. It looks like there’s not a huge difference between bedtime between the two.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;df %&amp;gt;% 
+  ggplot(aes(x = Start, y = sleep_time, color = what_day)) +
+  geom_point(alpha = 0.6) +
+  scale_y_continuous(expand = c(0,0),
+                     breaks = seq(0,24,4),
+                     limits = c(0,24.1),
+                    labels = c(&amp;quot;12 AM&amp;quot;,&amp;quot;4 AM&amp;quot;,&amp;quot;8 AM&amp;quot;, &amp;quot;12 PM&amp;quot;, &amp;quot;4 PM&amp;quot;,&amp;quot;8 PM&amp;quot;,&amp;quot;11:59 PM&amp;quot;)) +
+  labs(title = &amp;quot;Bedtime and Sleep Quality&amp;quot;,
+       subtitle = &amp;quot;Source: iPhone sleep cycle data (2014-2018)&amp;quot;,
+       x = &amp;quot;Date&amp;quot;,
+       y = &amp;quot;Bedtime&amp;quot;,
+       color = &amp;quot;&amp;quot;) +
+  theme_bw()&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2018-04-04-analyzing-sleep-data-with-r_files/figure-html/unnamed-chunk-5-1.png&#34; width=&#34;672&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;We can then look at the comparison between Sleep Quality and Hours of Sleep. Here it’s readily apparent the more you sleep the better the quality. This is isn’t ground breaking insight but it is pretty neat to be able to see my own data verifying what’s known in the literature. We can see that sleep quality taper off after 8+ hours of sleep.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;df %&amp;gt;% 
+  ggplot(aes(x = time_hr, y = sleep_quality, color = what_day)) +
+  geom_point(size = 2, alpha = 0.3) +
+  geom_smooth(aes(group = 1)) +
+  scale_x_continuous(breaks = seq(0,12,2)) +
+  labs(title = &amp;quot;Sleep Quality vs. Hours of Sleep&amp;quot;,
+       subtitle = &amp;quot;Source: iPhone sleep cycle data (2014-2018)&amp;quot;,
+       x = &amp;quot;Hours of Sleep&amp;quot;,
+       y = &amp;quot;Sleep Quality&amp;quot;,
+       color = &amp;quot;&amp;quot;) +
+  theme_bw()&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2018-04-04-analyzing-sleep-data-with-r_files/figure-html/unnamed-chunk-6-1.png&#34; width=&#34;672&#34; /&gt; Sleep cycle also allows you to integrate your sleep data with the pedometer so I plotted sleep duration vs the number of steps per day to see if there was a trend. There doesn’t appear to be too much of a trend between the two. The only thing we really see is that 8+ hours of sleep is a good predictor of good sleep quality. Side note: all the days I went over 10,000 steps were days I where I was traveling since I tend to walk everywhere when traveling to different places.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;df %&amp;gt;%
+  filter(steps &amp;gt; 0,
+         steps &amp;lt; 15000) %&amp;gt;% 
+  ggplot(aes(x = steps, y = time_hr, color = sleep_quality)) +
+  geom_point(alpha = 0.9) +
+  geom_smooth(color = &amp;quot;Purple&amp;quot;, fill = &amp;quot;White&amp;quot;) +
+  scale_color_viridis() +
+  scale_y_continuous(breaks = seq(0,12,2)) +
+  labs(title = &amp;quot;Sleep Duration vs Daily Steps&amp;quot;,
+       subtitle = &amp;quot;Source: iPhone sleep cycle data (2014-2018)&amp;quot;,
+       x = &amp;quot;Number of Steps&amp;quot;,
+       y = &amp;quot;Sleep Duration (hr)&amp;quot;,
+       color = &amp;quot;Sleep Quality\n&amp;quot;) +
+  theme_dark()&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2018-04-04-analyzing-sleep-data-with-r_files/figure-html/unnamed-chunk-7-1.png&#34; width=&#34;672&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;The next visualization we can perform is a ridgeline plot which is this nice way of visualizing changes over time. I like to think of them is layered/stacked histograms. We can make a ridgeline plot of steps and compare them throughout the days of the week. We see that there’s not too much of a difference in the number of steps but there tends to be more step activity as the week progresses.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;df %&amp;gt;% 
+  ggplot(aes(x = steps, y = day_of_week, fill = ..x..)) +
+  geom_density_ridges_gradient(scale = 3) +
+  scale_x_continuous(expand = c(0.01, 0)) +
+  scale_y_discrete(expand = c(0.01, 0)) +
+  scale_fill_viridis(name = &amp;quot;Steps\n&amp;quot;, option = &amp;quot;C&amp;quot;) +
+  labs(title = &amp;quot;Number of Steps Each Day of the Week&amp;quot;,
+       subtitle = &amp;quot;Source: iPhone sleep cycle data (2014-2018)&amp;quot;,
+       x = &amp;quot;Steps&amp;quot;) +
+  theme_ridges(font_size = 13, grid = TRUE) + theme(axis.title.y = element_blank())&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2018-04-04-analyzing-sleep-data-with-r_files/figure-html/unnamed-chunk-8-1.png&#34; width=&#34;672&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;Next thing to do is look at sleep duration across the days of the week. Here we can see that I definitely catch up on my sleep on Saturdays!&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;df %&amp;gt;% 
+  ggplot(aes(x = time_hr, y = day_of_week, fill = ..x..)) +
+  geom_density_ridges_gradient(scale = 3) +
+  scale_x_continuous(expand = c(0.01, 0),
+                     breaks= seq(0,12,4)) +
+  scale_y_discrete(expand = c(0.01, 0)) +
+  scale_fill_viridis(name = &amp;quot;Hours&amp;quot;, option = &amp;quot;C&amp;quot;) +
+  labs(title = &amp;quot;Duration of Sleep&amp;quot;,
+       subtitle = &amp;quot;Source: iPhone sleep cycle data (2014-2018)&amp;quot;,
+       x = &amp;quot;Time spent sleeping (hr)&amp;quot;) + 
+  theme_ridges(font_size = 13, grid = TRUE) + theme(axis.title.y = element_blank()) &lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2018-04-04-analyzing-sleep-data-with-r_files/figure-html/unnamed-chunk-9-1.png&#34; width=&#34;672&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;I then wanted to look at quality of sleep across the week but didn’t see an obvious trend.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;df %&amp;gt;% 
+  ggplot(aes(x = sleep_quality, y = day_of_week, fill = ..x..)) +
+  geom_density_ridges_gradient(scale = 3) +
+  scale_x_continuous(expand = c(0.01, 0)) +
+  scale_y_discrete(expand = c(0.01, 0)) +
+  scale_fill_viridis(name = &amp;quot;Quality of Sleep&amp;quot;, option = &amp;quot;C&amp;quot;) +
+  labs(title = &amp;#39;Quality of Sleep Each Day of the Week&amp;#39;,
+       subtitle = &amp;quot;Source: iPhone sleep cycle data (2014-2018)&amp;quot;) +
+  theme_ridges(font_size = 13, grid = TRUE) + theme(axis.title.y = element_blank())&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2018-04-04-analyzing-sleep-data-with-r_files/figure-html/unnamed-chunk-10-1.png&#34; width=&#34;672&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;One of the most interesting things that I saw was when I graphed my quality of sleep by year. 2014 was a rough time during my graduate school education and you can clearly see an improvement in my sleep quality after I joined a new lab in 2015. The crazy thing is that this is only sleep data and you can get a ton of interesting information from a phone app.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;df %&amp;gt;% 
+  ggplot(aes(x = sleep_quality, y = year, fill = ..x..)) +
+  geom_density_ridges_gradient(scale = 3) +
+  scale_x_continuous(expand = c(0.01, 0)) +
+  scale_y_discrete(expand = c(0.01, 0)) +
+  scale_fill_viridis(name = &amp;quot;Quality of Sleep&amp;quot;, option = &amp;quot;C&amp;quot;) +
+  labs(title = &amp;quot;Quality of Sleep by Year&amp;quot;,
+       subtitle = &amp;quot;Source: iPhone sleep cycle data (2014-2018)&amp;quot;,
+       x = &amp;quot;Sleep Quality (%)&amp;quot;) +
+  theme_ridges(font_size = 13, grid = TRUE) + theme(axis.title.y = element_blank())&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2018-04-04-analyzing-sleep-data-with-r_files/figure-html/unnamed-chunk-11-1.png&#34; width=&#34;672&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;Here’s how I created the header of this blog post. I graphed bedtime across time and mapped the color to sleep duration and removed the axis to make it look more artistic.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;p &amp;lt;- df %&amp;gt;% 
+  ggplot(aes(x = Start, y = sleep_time, color = time_hr)) +
+  geom_point(size = 3, alpha = 0.8) +
+  scale_color_viridis(option=&amp;quot;plasma&amp;quot;) +
+  guides(color = FALSE) +
+  scale_y_continuous(expand = c(0,0))+
+  theme_bw() +
+    theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank(),
+        axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank())
+p &lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2018-04-04-analyzing-sleep-data-with-r_files/figure-html/unnamed-chunk-12-1.png&#34; width=&#34;672&#34; /&gt;&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;ggsave(here(&amp;quot;static/img/headers&amp;quot;,  &amp;quot;sleep.png&amp;quot;),
+       height = 4, width = 7, units = &amp;quot;in&amp;quot;, dpi = 600)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Notice how I use &lt;strong&gt;here&lt;/strong&gt; within the ggsave function to specify which folder within the R project directory to save the file. This makes sure that the code will work on ANYONE’S computer regardless of where they put their folder!&lt;/p&gt;
+&lt;p&gt;So I hope you were able to learn something knew from this blog post or hopefully be inspired to analyze an interesting dataset of your own. Feel free to comment or reach out if you have any questions or suggestions!&lt;/p&gt;
+&lt;div id=&#34;and-one-more-thing&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;And one more thing&lt;/h2&gt;
+&lt;p&gt;&lt;strong&gt;Be sure to get enough sleep!&lt;/strong&gt; &lt;img src=&#34;https://media1.tenor.com/images/fbe770aca0cf5a81f5f34f92befc33f3/tenor.gif&#34; /&gt;&lt;/p&gt;
+&lt;/div&gt;
+</description>
+    </item>
+    
+    <item>
       <title>The World’s Most Powerful Rocket</title>
       <link>/post/the-world-s-most-powerful-rocket/</link>
       <pubDate>Sun, 18 Feb 2018 00:00:00 +0000</pubDate>
