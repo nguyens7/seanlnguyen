@@ -16,16 +16,22 @@
       <pubDate>Fri, 05 Oct 2018 00:00:00 +0000</pubDate>
       
       <guid>/post/presidential-chicken/</guid>
-      <description>&lt;p&gt;I remember back in undergrad when I visited my friends at Michigan State and they took me to the residential dining hall and how I had typical dorm food like salad bar, burgers, hot dogs, fries etc. The dining halls have improved drastically since then and now the undergraduate students have it great with so many options available to them.&lt;/p&gt;
+      <description>&lt;script src=&#34;/rmarkdown-libs/kePrint/kePrint.js&#34;&gt;&lt;/script&gt;
+
+
+&lt;p&gt;I remember back in undergrad when I visited my friends at Michigan State and they took me to the residential dining hall since they had a meal plan. The cafeteria had typical dorm food like salad bar, burgers, hot dogs, fries etc. Fortunately, the dining halls have improved drastically since then and now the undergraduate students have it great with so many options available to them.&lt;/p&gt;
 &lt;div id=&#34;eat-at-state&#34; class=&#34;section level1&#34;&gt;
 &lt;h1&gt;Eat at State&lt;/h1&gt;
 &lt;p&gt;A common theme in the lab is to ask one another what do you have for lunch today? Sometimes we don’t bring anything and our options are to go to the international center food court, the restaurants on Grand River or the residential dining halls. MSU employees have a great option to buy admission into the dining hall at a discounted rate so I always tag along with them so they can swipe me in. We typically preview the menus at &lt;a href=&#34;https://eatatstate.msu.edu/&#34;&gt;eatatstate.msu.edu&lt;/a&gt; and will choose to go to the dining hall one with the best menu. One of my favorite dishes from the cafeteria is Presidential Chicken which is a chicken dish with an alfredo like sauce with vegetables and is wrapped up in puff pastry envelope. It tastes great and is exponentially better than the food I’ve had at weddings. We haven’t seen the dish on the menu in well over a year so I decided to see if I could scrape the menus and make a quick shiny dashboard to figure out the next time they would serve it.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;library(rvest)
+library(knitr)
+library(kableExtra)
 library(tidyverse)
 library(lubridate)&lt;/code&gt;&lt;/pre&gt;
 &lt;/div&gt;
 &lt;div id=&#34;generate-urls&#34; class=&#34;section level1&#34;&gt;
 &lt;h1&gt;Generate urls&lt;/h1&gt;
+&lt;p&gt;The key to generating a list of URLs for scraping is to identify the patterns of interest and stick them together using the &lt;code&gt;paste()&lt;/code&gt; function. Here I used the main eatatstate domain and simply created an object for each dining hall. Then I can use the paste function to link them together so then I have URLs for each dining hall. Then I generated a sequence of dates and appended it to the dining hall URLs.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;domain &amp;lt;- &amp;quot;https://eatatstate.msu.edu/menu/&amp;quot;
 shaw &amp;lt;- &amp;quot;The%20Vista%20at%20Shaw/all/&amp;quot;
 sny_phy &amp;lt;- &amp;quot;The%20Gallery%20at%20Snyder%20Phillips/all/&amp;quot;
@@ -62,6 +68,7 @@ dining_halls&lt;/code&gt;&lt;/pre&gt;
 ## [4] &amp;quot;https://eatatstate.msu.edu/menu/The%20Vista%20at%20Shaw/all/2018-10-08&amp;quot;
 ## [5] &amp;quot;https://eatatstate.msu.edu/menu/The%20Vista%20at%20Shaw/all/2018-10-09&amp;quot;
 ## [6] &amp;quot;https://eatatstate.msu.edu/menu/The%20Vista%20at%20Shaw/all/2018-10-10&amp;quot;&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Next we will generate the URLs for lunch and dinner and combine them all.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# Create dinner urls
 dinner &amp;lt;- &amp;quot;?field_mealtime_target_id=191&amp;quot;
 
@@ -82,6 +89,7 @@ all_url %&amp;gt;%
 ## [6] &amp;quot;https://eatatstate.msu.edu/menu/The%20Vista%20at%20Shaw/all/2018-10-10&amp;quot;&lt;/code&gt;&lt;/pre&gt;
 &lt;div id=&#34;dates-and-time&#34; class=&#34;section level3&#34;&gt;
 &lt;h3&gt;Dates and Time&lt;/h3&gt;
+&lt;p&gt;We’ll want to clean up the data with regular expressions and repeat “Lunch” and “Dinner” for the dates and different dining halls.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# Date
 date &amp;lt;- rep(dates, times = 2 * dining_hall_no)
 
@@ -107,106 +115,4278 @@ time&lt;/code&gt;&lt;/pre&gt;
 &lt;/div&gt;
 &lt;div id=&#34;scrape&#34; class=&#34;section level3&#34;&gt;
 &lt;h3&gt;Scrape&lt;/h3&gt;
+&lt;p&gt;Here I used the rvest package and combined it with purrr so I read multiple URLs and return the the text so we can put it into a data frame.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# Menu 
 menu &amp;lt;- all_url %&amp;gt;%   
  map(~read_html(.x) %&amp;gt;% 
       html_nodes(&amp;quot;.meal-title&amp;quot;) %&amp;gt;% 
-      html_text()) 
-
-menu[1]&lt;/code&gt;&lt;/pre&gt;
-&lt;pre&gt;&lt;code&gt;## [[1]]
-##  [1] &amp;quot;Chicken Pasta Primavera&amp;quot;          
-##  [2] &amp;quot;Corn Muffin&amp;quot;                      
-##  [3] &amp;quot;Cuban Black Bean and Pork Chili &amp;quot; 
-##  [4] &amp;quot;Chocolate Chip Cookie&amp;quot;            
-##  [5] &amp;quot;Double Chocolate Chip Cookie&amp;quot;     
-##  [6] &amp;quot;M&amp;amp;M Cookie&amp;quot;                       
-##  [7] &amp;quot;Snickerdoodle Cookie&amp;quot;             
-##  [8] &amp;quot;Eggplant Lentil Chili&amp;quot;            
-##  [9] &amp;quot;Fruit Bowl&amp;quot;                       
-## [10] &amp;quot;Smokey BBQ Tofu Sandwich&amp;quot;         
-## [11] &amp;quot;Steamed Corn&amp;quot;                     
-## [12] &amp;quot;Sweet Potato Fries&amp;quot;               
-## [13] &amp;quot;Wild and Jasmine Rice Blend&amp;quot;      
-## [14] &amp;quot;Beef Hot Dog&amp;quot;                     
-## [15] &amp;quot;Breaded Chicken Patty&amp;quot;            
-## [16] &amp;quot;Burger Bar&amp;quot;                       
-## [17] &amp;quot;French Fries&amp;quot;                     
-## [18] &amp;quot;Grilled Cheese&amp;quot;                   
-## [19] &amp;quot;Baked Fresh Fish&amp;quot;                 
-## [20] &amp;quot;Breadsmith&amp;#39;s Bakery Peasant Roll&amp;quot; 
-## [21] &amp;quot;Honey Butter&amp;quot;                     
-## [22] &amp;quot;Orange Mustard Glaze&amp;quot;             
-## [23] &amp;quot;Roasted Red Potatoes&amp;quot;             
-## [24] &amp;quot;Sauteed Capri Vegetables&amp;quot;         
-## [25] &amp;quot;Brown Rice&amp;quot;                       
-## [26] &amp;quot;Guinness Lamb Stew&amp;quot;               
-## [27] &amp;quot;Steamed Baby Carrots with Parsley&amp;quot;
-## [28] &amp;quot;Basmati Rice&amp;quot;                     
-## [29] &amp;quot;Crab Rangoons&amp;quot;                    
-## [30] &amp;quot;Lo Mein &amp;quot;                         
-## [31] &amp;quot;Peking Pork &amp;quot;                     
-## [32] &amp;quot;Singapore Broth&amp;quot;                  
-## [33] &amp;quot;Tofu&amp;quot;&lt;/code&gt;&lt;/pre&gt;
+      html_text()) &lt;/code&gt;&lt;/pre&gt;
 &lt;/div&gt;
 &lt;div id=&#34;create-a-data-frame&#34; class=&#34;section level3&#34;&gt;
 &lt;h3&gt;Create a data frame&lt;/h3&gt;
+&lt;p&gt;We can bind the data into a data frame so we can easily filter and find menus that we like.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;food &amp;lt;- tibble(date, cafe, time, menu) %&amp;gt;% 
   unnest(menu) 
 
-food %&amp;gt;% 
-  head(15)&lt;/code&gt;&lt;/pre&gt;
-&lt;pre&gt;&lt;code&gt;## # A tibble: 15 x 4
-##    date       cafe                 time  menu                              
-##    &amp;lt;date&amp;gt;     &amp;lt;chr&amp;gt;                &amp;lt;chr&amp;gt; &amp;lt;chr&amp;gt;                             
-##  1 2018-10-05 &amp;quot;The Vista at Shaw &amp;quot; Lunch Chicken Pasta Primavera           
-##  2 2018-10-05 &amp;quot;The Vista at Shaw &amp;quot; Lunch Corn Muffin                       
-##  3 2018-10-05 &amp;quot;The Vista at Shaw &amp;quot; Lunch &amp;quot;Cuban Black Bean and Pork Chili &amp;quot;
-##  4 2018-10-05 &amp;quot;The Vista at Shaw &amp;quot; Lunch Chocolate Chip Cookie             
-##  5 2018-10-05 &amp;quot;The Vista at Shaw &amp;quot; Lunch Double Chocolate Chip Cookie      
-##  6 2018-10-05 &amp;quot;The Vista at Shaw &amp;quot; Lunch M&amp;amp;M Cookie                        
-##  7 2018-10-05 &amp;quot;The Vista at Shaw &amp;quot; Lunch Snickerdoodle Cookie              
-##  8 2018-10-05 &amp;quot;The Vista at Shaw &amp;quot; Lunch Eggplant Lentil Chili             
-##  9 2018-10-05 &amp;quot;The Vista at Shaw &amp;quot; Lunch Fruit Bowl                        
-## 10 2018-10-05 &amp;quot;The Vista at Shaw &amp;quot; Lunch Smokey BBQ Tofu Sandwich          
-## 11 2018-10-05 &amp;quot;The Vista at Shaw &amp;quot; Lunch Steamed Corn                      
-## 12 2018-10-05 &amp;quot;The Vista at Shaw &amp;quot; Lunch Sweet Potato Fries                
-## 13 2018-10-05 &amp;quot;The Vista at Shaw &amp;quot; Lunch Wild and Jasmine Rice Blend       
-## 14 2018-10-05 &amp;quot;The Vista at Shaw &amp;quot; Lunch Beef Hot Dog                      
-## 15 2018-10-05 &amp;quot;The Vista at Shaw &amp;quot; Lunch Breaded Chicken Patty&lt;/code&gt;&lt;/pre&gt;
+dim(food)
+food&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## [1] 2349    4&lt;/code&gt;&lt;/pre&gt;
+&lt;div style=&#34;border: 1px solid #ddd; padding: 5px; overflow-y: scroll; height:600px; &#34;&gt;
+&lt;table class=&#34;table&#34; style=&#34;margin-left: auto; margin-right: auto;&#34;&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th style=&#34;text-align:left;&#34;&gt;
+date
+&lt;/th&gt;
+&lt;th style=&#34;text-align:left;&#34;&gt;
+cafe
+&lt;/th&gt;
+&lt;th style=&#34;text-align:left;&#34;&gt;
+time
+&lt;/th&gt;
+&lt;th style=&#34;text-align:left;&#34;&gt;
+menu
+&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Chicken Pasta Primavera
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Corn Muffin
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Cuban Black Bean and Pork Chili
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Chocolate Chip Cookie
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Double Chocolate Chip Cookie
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+M&amp;amp;M Cookie
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Snickerdoodle Cookie
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Eggplant Lentil Chili
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Fruit Bowl
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Smokey BBQ Tofu Sandwich
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Steamed Corn
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Sweet Potato Fries
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Wild and Jasmine Rice Blend
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Beef Hot Dog
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Breaded Chicken Patty
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Burger Bar
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+French Fries
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Grilled Cheese
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Baked Fresh Fish
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Breadsmith’s Bakery Peasant Roll
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Honey Butter
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Orange Mustard Glaze
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Roasted Red Potatoes
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Sauteed Capri Vegetables
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Brown Rice
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Guinness Lamb Stew
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Steamed Baby Carrots with Parsley
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Basmati Rice
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Crab Rangoons
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lo Mein
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Peking Pork
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Singapore Broth
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Tofu
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-06
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Cheese Pizza
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-06
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Chicken Enchilada Soup
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-06
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Pepperoni Pizza
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-06
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Chocolate Chip Cookie
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-06
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Double Chocolate Cookie
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-06
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Snickerdoodle Cookie
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-06
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Fire Roasted Tomato Salsa
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-06
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Roasted Sweet Corn Soup
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-06
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Tortilla Chips
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-06
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Vegan Nacho Casserole
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-06
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Wild and Jasmine Rice Blend
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-06
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Basil Roasted Chicken
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-06
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Breadsmith’s Bakery Peasant Roll
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-06
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Confetti Rice
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-06
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Honey Butter
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-06
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Roasted Lemon Thyme Carrots
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-06
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Pork Pozole
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-06
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Quinoa
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-06
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Sweet and Spicy Brussels Sprouts
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-06
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Beef Shiitake Broth
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-06
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Beef Sirloin Roast
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-06
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Fried Pork Wontons
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-06
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Jasmine Rice
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-06
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lo Mein
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-06
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Sweet Ginger Sesame Sauce
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-06
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Tofu
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-07
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Beef, Bean and Bacon Soup
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-07
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Cheese Pizza
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-07
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Pepperoni Pizza
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-07
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Chocolate Chip Cookie
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-07
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Double Chocolate Chip Cookie
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-07
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+M&amp;amp;M Cookie
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-07
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Steamed Rice
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-07
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Sweet Corn Macaroni and Cheese
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-07
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Sweet Potato Fries
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-07
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Vegan Chicken Tenders
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-07
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Vegetable Minestrone Soup
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-07
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Wild Ruby Rice Blend
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-07
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Breadsmith’s Bakery Peasant Roll
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-07
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Honey Butter
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-07
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Jade Rice Blend
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-07
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Pork Loin with Mushroom Sauce
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-07
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Vegetable of the Day
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-07
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Bourbon Chicken
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-07
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Steamed Broccoli Florets
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-07
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Vegetable Fried Rice
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-07
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Basmati Rice
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-07
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Ginger and Garlic Broth
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-07
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lo Mein
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-07
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Pork Roast
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-07
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Saigon Sizzle Sauce
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-07
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Tofu
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-07
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Vegetable Egg Rolls
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-08
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Black Bean Chili with Sausage
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-08
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Cheese Stuffed Breadsticks
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-08
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Shrimp and Crab Penne Alfredo
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-08
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Chocolate Chip Cookie
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-08
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Double Chocolate Chip Cookie
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-08
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Oatmeal Raisin Cookie
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-08
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Basmati Rice
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-08
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Garlic Naan Bread
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-08
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lentil and Garbanzo Curry
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-08
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Steamed Snap Peas and Carrots
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-08
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Vegan White Bean Chick’n Chili
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-08
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Wild Ruby Rice Blend
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-08
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Beef Hot Dog
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-08
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Breaded Chicken Patty
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-08
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Burger Bar
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-08
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+French Fries
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-08
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Grilled Cheese
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-08
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Breadsmith’s Bakery Peasant Roll
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-08
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Honey Butter
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-08
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Jerk Pork Loin
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-08
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Roasted Sweet Potatoes
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-08
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Steamed Cauliflower and Carrots
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-08
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Caviar Medley Rice
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-08
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Chili Lime Glaze
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-08
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Roasted Zucchini and Summer Squash
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-08
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Spicy Soy Marinated Chicken Thighs
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-08
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Beef Sirloin Roast
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-08
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Japanese Beef Curry Broth
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-08
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Jasmine Rice
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-08
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lo Mein
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-08
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Pork Dumplings
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-08
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Spicy Szechuan Sauce
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-08
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Tofu
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-09
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Cheese Stuffed Breadsticks
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-09
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Cheese Tortellini w/ Red Pepper Marinara
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-09
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Chicken Cordon Bleu Soup
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-09
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Chocolate Chip Cookie
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-09
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Double Chocolate Chip Cookie
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-09
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Oatmeal Raisin Cookie
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-09
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Blackened Tofu
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-09
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Cauliflower Salad
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-09
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Fettuccine Pasta
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-09
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Garlic and Herb Spaghetti Sauce
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-09
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Mushroom Barley Soup
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-09
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Roasted Asparagus
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-09
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Sundried Tomato Alfredo Sauce
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-09
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Wild Ruby Rice Blend
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-09
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Beef Hot Dog
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-09
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Breaded Chicken Patty
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-09
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Burger Bar
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-09
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+French Fries
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-09
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Grilled Cheese
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-09
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Breadsmith’s Bakery Peasant Roll
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-09
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Buttered Peas and Carrots
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-09
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Cherry Chicken
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-09
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Cherry Pecan Wild Rice
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-09
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Honey Butter
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-09
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lime Cilantro Yogurt Sauce
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-09
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Steak Fajita Salad
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-09
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Basmati Rice
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-09
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Boneless Skinless Chicken Thighs
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-09
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lo Mein
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-09
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Mushroom Broth
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-09
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Thai Peanut Sauce
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-09
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Thai Vegetable Potstickers
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-09
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Tofu
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-10
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Breadsticks
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-10
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Buffalo Chicken Pasta
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-10
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lentil and Chorizo Soup
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-10
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Chocolate Chip Cookie
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-10
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Double Chocolate Chip Cookie
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-10
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Sugar Cookie
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-10
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+French Fries
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-10
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Roasted Red Pepper Aioli
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-10
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Steamed Mixed Vegetables
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-10
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Tomato Basil Soup
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-10
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Vegan Chick’n Sandwich
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-10
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Wild Ruby Rice Blend
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-10
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Beef Hot Dog
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-10
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Breaded Chicken Patty
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-10
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Burger Bar
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-10
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+French Fries
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-10
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Grilled Cheese
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-10
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Breadsmith’s Bakery Peasant Roll
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-10
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Chicken Pasta Primavera
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-10
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Honey Butter
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-10
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Roasted Zucchini and Summer Squash
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-10
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Cilantro Lime Rice
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-10
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Coleslaw
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-10
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Roasted Fajita Vegetables
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-10
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Tortilla Encrusted Fresh Fish
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-10
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Crab Rangoons
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-10
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Jasmine Rice
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-10
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lo Mein
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-10
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Miso Broth
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-10
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Pork Roast
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-10
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Sweet Onion Teriyaki Sauce
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-10
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Tofu
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-11
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Brick Oven Chicken Pot Pie
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-11
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Spicy Steak Chili
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-11
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Chocolate Chip Cookie
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-11
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Double Chocolate Chip Cookie
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-11
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Sugar Cookie
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-11
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Apple Snicker Bar Salad
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-11
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Breadsticks
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-11
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Cheese Tortellini with Alfredo
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-11
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Italian Vegetable Saute
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-11
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Onion Soup
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-11
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Roasted Red Pepper Marinara
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-11
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Spaghetti Noodles
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-11
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Wild Ruby Rice Blend
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-11
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Beef Hot Dog
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-11
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Breaded Chicken Patty
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-11
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Burger Bar
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-11
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+French Fries
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-11
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Grilled Cheese
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-11
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Beef and Noodles
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-11
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Breadsmith’s Bakery Peasant Roll
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-11
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Honey Butter
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-11
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Steamed Broccoli and Cauliflower
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-11
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Garlic Buttered Rice
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-11
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Roasted Ginger Curry Carrots
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-11
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Tandoori Chicken
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-11
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Asian Pineapple Sauce
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-11
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Basmati Rice
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-11
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Crab Meat
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-11
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lo Mein
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-11
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Pork Wonton
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-11
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Seafood and Bok Choy Broth
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-11
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Shrimp
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-11
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Tofu
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-12
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Garlic Breadsticks
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-12
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Macaroni and Cheese
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-12
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Pepper Jack Crab Soup
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-12
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Chocolate Chip Cookie
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-12
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Double Chocolate Chip Cookie
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-12
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+M&amp;amp;M Cookie
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-12
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Anaheim Chili Soup
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-12
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Apple Baked Beans
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-12
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Broccoli Pasta Salad
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-12
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Corn Fritters
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-12
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Vegan BBQ Beef Tips
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-12
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Wild Ruby Rice Blend
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-12
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Beef Hot Dog
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-12
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Breaded Chicken Patty
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-12
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Burger Bar
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-12
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+French Fries
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-12
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Grilled Cheese
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-12
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Breadsmith’s Bakery Peasant Roll
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-12
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Fresh Fish with Garlic Herb Butter
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-12
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Honey Butter
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-12
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Roasted Root Vegetables
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-12
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Steamed Rice
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-12
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Sauteed Bok Choy
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-12
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Sesame Brown Rice
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-12
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Sesame Chili Crusted Chicken
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-12
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Stir Fry Sauce
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-12
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Bangkok Pork Broth
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-12
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Duck Potstickers
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-12
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Jasmine Rice
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-12
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lo Mein
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-12
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Orange Citrus Sauce
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-12
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Pork Roast
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-12
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Vista at Shaw
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Tofu
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Gallery at Snyder Phillips
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Chocolate Chip Cookie
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Gallery at Snyder Phillips
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Chocolate Peanut Butter Marble Cake
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Gallery at Snyder Phillips
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Iced Brownie
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Gallery at Snyder Phillips
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Snickerdoodle Cookie
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Gallery at Snyder Phillips
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Vegan Chocolate Cake
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Gallery at Snyder Phillips
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Battered Haddock
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Gallery at Snyder Phillips
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Beyond Meat Vegan Burger
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Gallery at Snyder Phillips
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Breaded Chicken Patty
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Gallery at Snyder Phillips
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Burger
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Gallery at Snyder Phillips
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Cheeseburger
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Gallery at Snyder Phillips
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Chef’s Choice
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Gallery at Snyder Phillips
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Chipotle Mayonnaise
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Gallery at Snyder Phillips
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Dill Pickle Chips
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Gallery at Snyder Phillips
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+French Fries
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Gallery at Snyder Phillips
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Grilled Cheese
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Gallery at Snyder Phillips
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Grilled Chicken Breast
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Gallery at Snyder Phillips
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Iceberg Lettuce
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Gallery at Snyder Phillips
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lemons
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Gallery at Snyder Phillips
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Mayonnaise
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Gallery at Snyder Phillips
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Mustard
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Gallery at Snyder Phillips
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Red Onions
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Gallery at Snyder Phillips
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Sweet Baby Ray’s BBQ Sauce
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Gallery at Snyder Phillips
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Tartar Sauce
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Gallery at Snyder Phillips
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Tomatoes
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Gallery at Snyder Phillips
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Bacon
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Gallery at Snyder Phillips
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Battered Haddock
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Gallery at Snyder Phillips
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Beanless Chili
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Gallery at Snyder Phillips
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Cheddar Cheese
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Gallery at Snyder Phillips
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Cheese Sauce
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Gallery at Snyder Phillips
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+French Fries
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Gallery at Snyder Phillips
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Mushrooms
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Gallery at Snyder Phillips
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Pepper Jack Cheese
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Gallery at Snyder Phillips
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Philly Beef Sandwich
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Gallery at Snyder Phillips
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Provolone Cheese
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Gallery at Snyder Phillips
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Sauteed Bell Peppers and Onions
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Gallery at Snyder Phillips
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Swiss Cheese
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Gallery at Snyder Phillips
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Caramel Apple Pizza
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Gallery at Snyder Phillips
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Cheese Pizza
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Gallery at Snyder Phillips
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Pepperoni Pizza
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Gallery at Snyder Phillips
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Farro
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Gallery at Snyder Phillips
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Fattoush Salad
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Gallery at Snyder Phillips
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Jasmine Rice
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Gallery at Snyder Phillips
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Steamed Peas
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Gallery at Snyder Phillips
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Teriyaki Tofu and Vegetable Yakitori
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Gallery at Snyder Phillips
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Vegan French Onion Soup
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Gallery at Snyder Phillips
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Woody’s Garlic Scallion Hummus
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Gallery at Snyder Phillips
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Woody’s Original Hummus
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Gallery at Snyder Phillips
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Woody’s Tabbouleh Salad
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Gallery at Snyder Phillips
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Woody’s Thin Pita Bread
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-05
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+The Gallery at Snyder Phillips
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Lunch
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Corn O’Brien
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;/div&gt;
 &lt;p&gt;I made it on Monday this week and to my surprise I saw that they would be serving it today for dinner in Landon!&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;food %&amp;gt;% 
-  filter( str_detect(menu, &amp;quot;Presidential&amp;quot;)) &lt;/code&gt;&lt;/pre&gt;
+  filter(str_detect(menu, &amp;quot;Presidential&amp;quot;))&lt;/code&gt;&lt;/pre&gt;
 &lt;pre&gt;&lt;code&gt;## # A tibble: 1 x 4
-##   date       cafe                          time   menu                
-##   &amp;lt;date&amp;gt;     &amp;lt;chr&amp;gt;                         &amp;lt;chr&amp;gt;  &amp;lt;chr&amp;gt;               
-## 1 2018-10-05 &amp;quot;Heritage Commons at Landon &amp;quot; Dinner Presidential Chicken&lt;/code&gt;&lt;/pre&gt;
+##   date       cafe                       time   menu                
+##   &amp;lt;date&amp;gt;     &amp;lt;chr&amp;gt;                      &amp;lt;chr&amp;gt;  &amp;lt;chr&amp;gt;               
+## 1 2018-10-05 Heritage Commons at Landon Dinner Presidential Chicken&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;We can also filter to look at the menu for today only.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;food %&amp;gt;% 
   filter(date == today())&lt;/code&gt;&lt;/pre&gt;
 &lt;pre&gt;&lt;code&gt;## # A tibble: 288 x 4
-##    date       cafe                 time  menu                              
-##    &amp;lt;date&amp;gt;     &amp;lt;chr&amp;gt;                &amp;lt;chr&amp;gt; &amp;lt;chr&amp;gt;                             
-##  1 2018-10-05 &amp;quot;The Vista at Shaw &amp;quot; Lunch Chicken Pasta Primavera           
-##  2 2018-10-05 &amp;quot;The Vista at Shaw &amp;quot; Lunch Corn Muffin                       
-##  3 2018-10-05 &amp;quot;The Vista at Shaw &amp;quot; Lunch &amp;quot;Cuban Black Bean and Pork Chili &amp;quot;
-##  4 2018-10-05 &amp;quot;The Vista at Shaw &amp;quot; Lunch Chocolate Chip Cookie             
-##  5 2018-10-05 &amp;quot;The Vista at Shaw &amp;quot; Lunch Double Chocolate Chip Cookie      
-##  6 2018-10-05 &amp;quot;The Vista at Shaw &amp;quot; Lunch M&amp;amp;M Cookie                        
-##  7 2018-10-05 &amp;quot;The Vista at Shaw &amp;quot; Lunch Snickerdoodle Cookie              
-##  8 2018-10-05 &amp;quot;The Vista at Shaw &amp;quot; Lunch Eggplant Lentil Chili             
-##  9 2018-10-05 &amp;quot;The Vista at Shaw &amp;quot; Lunch Fruit Bowl                        
-## 10 2018-10-05 &amp;quot;The Vista at Shaw &amp;quot; Lunch Smokey BBQ Tofu Sandwich          
+##    date       cafe              time  menu                           
+##    &amp;lt;date&amp;gt;     &amp;lt;chr&amp;gt;             &amp;lt;chr&amp;gt; &amp;lt;chr&amp;gt;                          
+##  1 2018-10-05 The Vista at Shaw Lunch Chicken Pasta Primavera        
+##  2 2018-10-05 The Vista at Shaw Lunch Corn Muffin                    
+##  3 2018-10-05 The Vista at Shaw Lunch Cuban Black Bean and Pork Chili
+##  4 2018-10-05 The Vista at Shaw Lunch Chocolate Chip Cookie          
+##  5 2018-10-05 The Vista at Shaw Lunch Double Chocolate Chip Cookie   
+##  6 2018-10-05 The Vista at Shaw Lunch M&amp;amp;M Cookie                     
+##  7 2018-10-05 The Vista at Shaw Lunch Snickerdoodle Cookie           
+##  8 2018-10-05 The Vista at Shaw Lunch Eggplant Lentil Chili          
+##  9 2018-10-05 The Vista at Shaw Lunch Fruit Bowl                     
+## 10 2018-10-05 The Vista at Shaw Lunch Smokey BBQ Tofu Sandwich       
 ## # ... with 278 more rows&lt;/code&gt;&lt;/pre&gt;
 &lt;/div&gt;
 &lt;/div&gt;
 &lt;div id=&#34;wordcloud&#34; class=&#34;section level1&#34;&gt;
 &lt;h1&gt;Wordcloud&lt;/h1&gt;
+&lt;p&gt;Since we have a tidy data frame of all the dining halls we can use the tidytext package from Julia Silge and David Robinson to tokenize the menu and make a word cloud. First I used the palette from MSU’s website and set it as an object &lt;code&gt;pal&lt;/code&gt;. Next we will unnest the tokens from the &lt;code&gt;food&lt;/code&gt; data frame and count up the most frequent words. We can remove filler words with an &lt;code&gt;anti_join()&lt;/code&gt; command and then tell R to create a wordcloud!&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;library(tidytext)
 library(wordcloud)
 library(RColorBrewer)
 
-# MSU pallete colors  
+# MSU palette colors  
 pal &amp;lt;- c(&amp;quot;#97A2A2&amp;quot;,&amp;quot;#F08521&amp;quot;,&amp;quot;#6E005F&amp;quot;,&amp;quot;#F08521&amp;quot;,&amp;quot;#97A2A2&amp;quot;,&amp;quot;#0DB14B&amp;quot;)
 
 set.seed(1234)
@@ -217,15 +4397,54 @@ food %&amp;gt;%
   rename(word = menu) %&amp;gt;% 
   anti_join(stop_words, by = &amp;quot;word&amp;quot;) %&amp;gt;% 
   with(wordcloud(word, n, random.order = FALSE, max.words = 40, color = pal,fixed.asp = TRUE))&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;&lt;img src=&#34;/post/2018-10-05-presidential-chicken_files/figure-html/unnamed-chunk-9-1.png&#34; width=&#34;672&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2018-10-05-presidential-chicken_files/figure-html/unnamed-chunk-11-1.png&#34; width=&#34;672&#34; /&gt;&lt;/p&gt;
 &lt;/div&gt;
 &lt;div id=&#34;shiny-dashboard&#34; class=&#34;section level1&#34;&gt;
 &lt;h1&gt;Shiny Dashboard&lt;/h1&gt;
 &lt;p&gt;Now that we learned how to make a wordcloud, scrape the menu into a tidy data frame we can work on making a interact with the data by making a shiny dashboard.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;library(shiny)
+library(shinydashboard)
+
+ui &amp;lt;- dashboardPage(skin = &amp;quot;green&amp;quot;,
+  dashboardHeader(title = &amp;quot;Eat at State&amp;quot;),
+  dashboardSidebar( selectInput(inputId = &amp;#39;dininghall&amp;#39;,
+                  label = &amp;#39;Choose Dining Hall:&amp;#39;,
+                  choices = c(&amp;quot;All&amp;quot;,&amp;quot;The Vista at Shaw &amp;quot;,
+                              &amp;quot;The Gallery at Snyder Phillips &amp;quot;,
+                              &amp;quot;Heritage Commons at Landon &amp;quot;))
+  ),
+  
+  dashboardBody(
+    # Boxes need to be put in a row (or column)
+    fluidRow(
+      box(dataTableOutput(&amp;quot;menu&amp;quot;),title = &amp;quot;MSU Dining Menu&amp;quot;,
+          width = 12, status = &amp;quot;primary&amp;quot;)
+      )
+    )
+  )
+
+server &amp;lt;- function(input, output) {
+  
+   menu &amp;lt;- reactive({
+    if(input$dininghall == &amp;quot;All&amp;quot;)
+        return(food)
+    else
+      food %&amp;gt;% 
+       filter(cafe %in% input$dininghall)
+  })
+
+  output$menu &amp;lt;- renderDataTable(menu())
+}
+
+shinyApp(ui, server)&lt;/code&gt;&lt;/pre&gt;
 &lt;div class=&#34;figure&#34;&gt;
 &lt;img src=&#34;https://media.giphy.com/media/1evFtMR37i8VXzMwtJ/giphy.gif&#34; alt=&#34;Eat at State Shiny Dashboard&#34; /&gt;
 &lt;p class=&#34;caption&#34;&gt;Eat at State Shiny Dashboard&lt;/p&gt;
 &lt;/div&gt;
+&lt;/div&gt;
+&lt;div id=&#34;presidential-chicken&#34; class=&#34;section level1&#34;&gt;
+&lt;h1&gt;Presidential Chicken!&lt;/h1&gt;
+&lt;p&gt;&lt;img src=&#34;https://i.imgur.com/14UQkFE.jpg&#34; alt=&#34;Landon&#34; /&gt; I had the idea to scrape for presidential chicken on Monday this week and I was thrilled that Landon had it for dinner on Friday. Now that I was able to go I decided to create this blog post to share with everyone!&lt;/p&gt;
 &lt;/div&gt;
 </description>
     </item>
