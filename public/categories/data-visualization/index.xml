@@ -1,26 +1,16 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Posts on Sean Nguyen</title>
-    <link>/post/</link>
-    <description>Recent content in Posts on Sean Nguyen</description>
+    <title>Data Visualization on Sean Nguyen</title>
+    <link>/categories/data-visualization/</link>
+    <description>Recent content in Data Visualization on Sean Nguyen</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <copyright>&amp;copy; 2018</copyright>
-    <lastBuildDate>Sun, 01 Jan 2017 00:00:00 -0500</lastBuildDate>
+    <lastBuildDate>Fri, 06 Apr 2018 00:00:00 +0000</lastBuildDate>
     
-	<atom:link href="/post/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="/categories/data-visualization/index.xml" rel="self" type="application/rss+xml" />
     
-    
-    <item>
-      <title>Presidential Chicken</title>
-      <link>/post/presidential-chicken/</link>
-      <pubDate>Fri, 05 Oct 2018 00:00:00 +0000</pubDate>
-      
-      <guid>/post/presidential-chicken/</guid>
-      <description>I remember back in undergrad when I visited my friends at Michigan State and they took me to the residential dining hall since they had a meal plan. The cafeteria had typical dorm food like salad bar, burgers, hot dogs, fries etc. Fortunately, the dining halls have improved drastically since then and now the undergraduate students have it great with so many options available to them.
-Eat at State A common theme in the lab is to ask one another what do you have for lunch today?</description>
-    </item>
     
     <item>
       <title>Analyzing Sleep Data with R</title>
